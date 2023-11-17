@@ -60,19 +60,21 @@ type StringHash struct {
 
 // computes (s0​+s1​*k+s2​*k^2+…+sn*​k^n)
 func (hasher *Hasher) Hash(s string) StringHash {
+	n := len(s)
 	sum := uint64(0)
 
-	for i := range s {
-		sum = (sum + uint64(s[i])*hasher.NthPower(i)) % hasher.mod
+	for i := n - 1; i >= 0; i-- {
+		sum = (sum + uint64(s[n-1-i])*hasher.NthPower(i)) % hasher.mod
 	}
+
 	return StringHash{
-		StrLen: len(s),
+		StrLen: n,
 		Hash:   sum,
 	}
 }
 
 func (hasher *Hasher) ConcatHash(lhs, rhs StringHash) StringHash {
-	hash := lhs.Hash + hasher.NthPower(lhs.StrLen)*rhs.Hash
+	hash := lhs.Hash*hasher.NthPower(rhs.StrLen) + rhs.Hash
 	return StringHash{
 		StrLen: lhs.StrLen + rhs.StrLen,
 		Hash:   hash,
@@ -80,33 +82,42 @@ func (hasher *Hasher) ConcatHash(lhs, rhs StringHash) StringHash {
 }
 
 func (hasher *Hasher) RemovePrefix(str, prefix StringHash) StringHash {
-	hash := (str.Hash - prefix.Hash) / hasher.NthPower(prefix.StrLen)
+	newLen := str.StrLen - prefix.StrLen
+	hash := str.Hash - prefix.Hash*hasher.NthPower(newLen)
+
 	return StringHash{
-		StrLen: str.StrLen - prefix.StrLen,
+		StrLen: newLen,
 		Hash:   hash,
 	}
 }
 
 func (hasher *Hasher) RemoveSuffix(str, suffix StringHash) StringHash {
-	hash := str.Hash - suffix.Hash*hasher.NthPower(suffix.StrLen)
+	newLen := str.StrLen - suffix.StrLen
+	hash := (str.Hash - suffix.Hash) / hasher.NthPower(suffix.StrLen)
+
 	return StringHash{
-		StrLen: str.StrLen - suffix.StrLen,
+		StrLen: newLen,
 		Hash:   hash,
 	}
 }
 
-// their lengths are determined by indexes
+// Their lengths are determined by indexes.
+// i-th prefix is Hash(s[:i]). Total of len(s)+1 hashes
 func (hasher *Hasher) GetPrefixHashes(s string) []uint64 {
-	n := len(s)
-	hashes := make([]uint64, n+1)
+	hashes := make([]uint64, len(s)+1)
 
-	for i := 1; i < len(hashes); i++ {
-		hashes[i] = (hashes[i-1] + hasher.NthPower(i)*uint64(s[i-1])) % hasher.mod
+	for i := 0; i < len(s); i++ {
+		hashes[i+1] = (hashes[i]*hasher.k + uint64(s[i])) % hasher.mod
 	}
 	return hashes
 }
 
-// WARNING: this will not be equal to Hash(str[l:r]). r not incusive
-func (hasher *Hasher) HashSubString(prefixHashes []uint64, l, r int) uint64 {
-	return intmath.Pow(hasher.k, l) * (prefixHashes[r] - prefixHashes[l])
+func (hasher *Hasher) HashSubString(prefixHashes []uint64, l, r int) StringHash {
+	newLen := r - l
+	hash := prefixHashes[r] - prefixHashes[l]*hasher.NthPower(newLen)
+
+	return StringHash{
+		StrLen: newLen,
+		Hash:   hash,
+	}
 }
