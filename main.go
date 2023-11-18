@@ -3,17 +3,15 @@ package main
 import (
 	"fmt"
 
-	"github.com/Savvelius/competetive-goalgs/strs"
+	prefsums "github.com/Savvelius/competetive-goalgs/pref-sums"
 )
 
 func main() {
-	s := "choose"
-	t :=
-		"choose life. choose a job. choose a career. choose a family. choose a fu..."
+	arr1 := []int{1, -2, 5, 8, 9, 123}
+	pref1 := prefsums.GetPrefixSums(arr1)
+	arr2 := []int{7, 4, 6, 2, 8, 111}
+	pref2 := prefsums.GetPrefixSums(arr2)
+	l, r := prefsums.SameSumSubArray(pref1, pref2)
 
-	idxs := strs.RabinKarp(t, s)
-
-	for _, idx := range idxs {
-		fmt.Println(t[idx : idx+len(s)])
-	}
+	fmt.Println(l, r)
 }

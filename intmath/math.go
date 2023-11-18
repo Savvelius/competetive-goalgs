@@ -16,6 +16,10 @@ type Float interface {
 	float32 | float64
 }
 
+type Number interface {
+	Float | Integer
+}
+
 func GCD[I Integer](a, b I) I {
 	for b > 0 {
 		t := a % b
