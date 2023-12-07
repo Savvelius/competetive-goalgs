@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/Savveius/gogreedyalgs/sort"
 	"github.com/Savvelius/graph-algs/heap"
 )
 
@@ -32,9 +31,10 @@ func inputsToLeafs(inputs []Input) []Leaf {
 		sumFreq += float64(inputs[i].freq)
 	}
 
-	leafs := sort.Map(inputs, func(i Input) Leaf {
-		return Leaf{label: i.label, prob: float64(i.freq) / sumFreq}
-	})
+	leafs := make([]Leaf, len(inputs))
+	for i, inp := range inputs {
+		leafs[i] = Leaf{label: inp.label, prob: float64(inp.freq) / sumFreq}
+	}
 
 	return leafs
 }
