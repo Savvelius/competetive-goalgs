@@ -3,11 +3,11 @@ package strs
 // Returns indexes of starts of needle inside haystack.
 // Asserts haystack doesn't contain byte(0)
 func KMP(needle, haystack string) []int {
-	prefixes := Z(needle + string(0) + haystack)
+	prefixes := PrefixFn(needle + string(0) + haystack)
 	answer := []int{}
 	for i, pref := range prefixes {
 		if pref == len(needle) {
-			answer = append(answer, i-len(needle)-1)
+			answer = append(answer, i-2*len(needle))
 		}
 	}
 	return answer

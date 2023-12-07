@@ -1,5 +1,7 @@
 package intmath
 
+import "math"
+
 type Unsigned interface {
 	uint | uint8 | uint16 | uint32 | uint64 | uintptr
 }
@@ -52,4 +54,23 @@ func Abs[S Signed](num S) S {
 		num *= -1
 	}
 	return num
+}
+
+func Distance[S Signed](x, y S) S {
+	return Abs(x - y)
+}
+
+func IsPowerOfTwo[T Integer](num T) bool {
+	return (num & (num - 1)) == 0
+}
+
+func NextPow2[T Integer](num T) T {
+	if IsPowerOfTwo(num) {
+		return num
+	}
+
+	log2 := math.Log2(float64(num))
+	log2Ceil := T(math.Ceil(log2))
+
+	return Pow[T, T](2, log2Ceil)
 }

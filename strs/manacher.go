@@ -1,14 +1,17 @@
 package strs
 
-func Manacher(s string) []int {
+import "cmp"
+
+func Manacher[T cmp.Ordered](s []T) []int {
 	d1 := ManacherEven(s)
 	d2 := ManacherOdd(s)
 	for i := range d1 {
-		d1[i] += d2[i]
+		d1[i] = max(d2[i], d1[i])
 	}
 	return d1
 }
-func ManacherOdd(s string) []int {
+
+func ManacherOdd[T cmp.Ordered](s []T) []int {
 	n := len(s)
 	p := make([]int, n)
 
@@ -34,7 +37,7 @@ func ManacherOdd(s string) []int {
 }
 
 // returns lengths of palindromes at their left center index
-func ManacherEven(s string) []int {
+func ManacherEven[T cmp.Ordered](s []T) []int {
 	n := len(s)
 	p := make([]int, n)
 	p[n-1] = 0

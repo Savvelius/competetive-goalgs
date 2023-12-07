@@ -12,6 +12,9 @@ type Vertex struct {
 
 	sum    int
 	length int
+
+	assign   int
+	assigned bool
 }
 
 // Constructs segment tree from array in O(N) time and memory
@@ -26,27 +29,34 @@ func New(array []int) *Vertex {
 		mid := len(array) / 2
 
 		root.left = New(array[:mid])
-		if root.left != nil {
-			root.sum += root.left.sum
-			root.left.parent = root
-		}
+		root.sum += root.left.sum
+		root.left.parent = root
 
 		root.right = New(array[mid:])
-		if root.right != nil {
-			root.sum += root.right.sum
-			root.right.parent = root
-		}
+		root.sum += root.right.sum
+		root.right.parent = root
 
 		return root
 	}
 }
 
 func (root *Vertex) isLeaf() bool {
-	return root.left == nil && root.right == nil
+	return root.left == nil
 }
 
 func (root *Vertex) Add(idx, value int) {
+	root.tryPushAssign()
+	root.sum += value
 
+	if root.isLeaf() {
+		return
+	}
+
+	if idx < root.left.length {
+		root.left.Add(idx, value)
+	} else {
+		root.right.Add(idx-root.left.length, value)
+	}
 }
 
 func (root *Vertex) Set(idx, value int) {
@@ -54,6 +64,7 @@ func (root *Vertex) Set(idx, value int) {
 		panic("idx should be less than length")
 	}
 
+	root.tryPushAssign()
 	if root.isLeaf() {
 		delta := value - root.sum
 		root.sum = value
@@ -66,13 +77,59 @@ func (root *Vertex) Set(idx, value int) {
 		return
 	}
 
-	if root.left != nil && idx < root.left.length {
+	if idx < root.left.length {
 		root.left.Set(idx, value)
+	} else {
+		root.right.Set(idx-root.left.length, value)
+	}
+}
+
+func (root *Vertex) ForLeftRight(f func(*Vertex)) {
+	if !root.isLeaf() {
+		f(root.left)
+		f(root.right)
+	}
+}
+
+// assigns value to all elements in [l, r)
+func (root *Vertex) Assign(l, r, value int) {
+	if l == 0 && r == root.length {
+		root.assign = value
+		root.assigned = true
 		return
 	}
 
-	offset := root.length - root.right.length
-	root.right.Set(idx-offset, value)
+	if root.isLeaf() {
+		if l == r && l == 0 {
+			root.assign = value
+			root.assigned = true
+			return
+		}
+		panic("sub array range out of bounds")
+	}
+
+	if r <= root.left.length {
+		root.left.Assign(l, r, value)
+	} else if l >= root.left.length {
+		root.right.Assign(l-root.left.length, r-root.left.length, value)
+	} else {
+		root.left.Assign(l, root.left.length, value)
+		root.right.Assign(0, r, value)
+	}
+}
+
+// if root is assigned
+func (root *Vertex) tryPushAssign() {
+	if !root.assigned {
+		return
+	}
+	root.sum = root.length * root.assign
+
+	root.ForLeftRight(func(v *Vertex) {
+		v.assign = root.assign
+		v.assigned = true
+	})
+	root.assigned = false
 }
 
 // returns sum in [l, r)
@@ -81,10 +138,11 @@ func (root *Vertex) GetSum(l, r int) int {
 		log.Fatalf("l=%d must less or equal to r=%d", l, r)
 	}
 
-	if l == r {
+	if l == r || l > root.length {
 		return 0
 	}
 
+	root.tryPushAssign()
 	if l == 0 && r == root.length {
 		return root.sum
 	}
@@ -93,16 +151,7 @@ func (root *Vertex) GetSum(l, r int) int {
 		panic("sub array range out of bounds")
 	}
 
-	childSum := 0
-
-	if root.left != nil && l < root.left.length {
-		childSum += root.left.GetSum(l, min(r, root.left.length))
-	}
-
-	leftLen := root.length - root.right.length
-	childSum += root.right.GetSum(0, r-leftLen)
-
-	return childSum
+	return root.left.GetSum(l, min(r, root.left.length)) + root.right.GetSum(0, r-root.left.length)
 }
 
 func (root *Vertex) Pprint() {
@@ -131,12 +180,9 @@ func (root *Vertex) Pprint() {
 		}
 
 		fmt.Printf("Node(sum=%d, len=%d)  ", cur.sum, cur.length)
-		if cur.left != nil {
-			queue = append(queue, cur.left)
-		}
-		if cur.right != nil {
-			queue = append(queue, cur.right)
-		}
+		cur.ForLeftRight(func(v *Vertex) {
+			queue = append(queue, v)
+		})
 	}
 }
 
@@ -144,11 +190,7 @@ func (root *Vertex) Pprint() {
 func (root *Vertex) ForEach(f func(*Vertex)) {
 	f(root)
 
-	if root.left != nil {
-		root.left.ForEach(f)
-	}
-
-	if root.right != nil {
-		root.right.ForEach(f)
-	}
+	root.ForLeftRight(func(v *Vertex) {
+		v.ForEach(f)
+	})
 }

@@ -2,6 +2,8 @@ package prefsums
 
 import "github.com/Savvelius/competetive-goalgs/intmath"
 
+// Returns array of len=len(slice)+1 where i-th element is sum(slice[:i])
+// If elements of slices are > 0 than result is in ascending order
 func GetPrefixSums[I intmath.Number](slice []I) []I {
 	sums := make([]I, len(slice)+1)
 
@@ -10,6 +12,24 @@ func GetPrefixSums[I intmath.Number](slice []I) []I {
 	}
 
 	return sums
+}
+
+func Get2DPrefixSums[I intmath.Signed](A [][]I) [][]I {
+	N := len(A) + 1
+	M := len(A[0]) + 1
+
+	P := make([][]I, N)
+	for i := range P {
+		P[i] = make([]I, M)
+	}
+
+	for i := 1; i < N; i++ {
+		for j := 1; j < M; j++ {
+			P[i][j] = P[i-1][j] + P[i][j-1] - P[i-1][j-1] + A[i][j]
+		}
+	}
+
+	return P
 }
 
 // reducable to two-sum
@@ -27,6 +47,21 @@ func HasSubArray[I intmath.Number](prefixes []I, sum I) bool {
 	}
 
 	return false
+}
+
+func ZeroLenSubArray[S intmath.Signed](p []S) int {
+	m := map[S]int{}
+	maxLen := 0
+
+	for i := range p {
+		prev, ok := m[p[i]]
+		if ok {
+			maxLen = max(maxLen, i-prev)
+		}
+		m[p[i]] = i
+	}
+
+	return maxLen
 }
 
 // some greedy alg. Might be true. Can't prove.

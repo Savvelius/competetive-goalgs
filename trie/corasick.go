@@ -1,5 +1,6 @@
 package trie
 
+// aho-corasick algorithm.
 // returns first occurence of any string in dict or -1 if not found. O(len(text)*VocabSize)
 func AhoCorasick(dict []string, text string) int {
 	root := NewVertex()

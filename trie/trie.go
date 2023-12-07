@@ -1,5 +1,7 @@
 package trie
 
+// prefix trie in its classis form
+
 const K = 26
 
 // stores only lowercase words
